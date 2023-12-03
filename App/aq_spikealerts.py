@@ -5,6 +5,7 @@ import sys
 from dotenv import load_dotenv # Loading .env info
 from App.modules.db_init import db_init, db_need_init
 from App.modules.MAIN import main_loop
+from App.modules.Twilio_Functions import send_texts
 
 load_dotenv() # load .env file
 
@@ -14,7 +15,7 @@ if db_need_init() == True:
 
 # Have it try the main loop. Text Manager's Local Phone if it fails
 try:
-    MAIN.main_loop()
+    main_loop()
     
 except Exception as e:
     
@@ -22,4 +23,4 @@ except Exception as e:
     
 finally:
 
-    our_twilio.send_texts([os.environ['LOCAL_PHONE']], ['SpikeAlerts Down']) 
+    send_texts([os.environ['LOCAL_PHONE']], ['SpikeAlerts Down']) 
