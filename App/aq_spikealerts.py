@@ -11,4 +11,15 @@ load_dotenv() # load .env file
 if db_need_init() == True:
   print("Minneapolis Boundaries table empty. running db init.")
   db_init()
-main_loop()
+
+# Have it try the main loop. Text Manager's Local Phone if it fails
+try:
+    MAIN.main_loop()
+    
+except Exception as e:
+    
+    print(e)
+    
+finally:
+
+    our_twilio.send_texts([os.environ['LOCAL_PHONE']], ['SpikeAlerts Down']) 
