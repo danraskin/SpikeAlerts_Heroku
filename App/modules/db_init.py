@@ -107,11 +107,6 @@ def db_need_init():
 def db_init():
   # execute get boundary --> post values to database
   pg_post_boundaries(get_boundary_from_url())
-  boundaries = pg_get_boundary() # get boundaries from db
-  response = import_sensors_data(boundaries) # import sensors data from purpleair api
-  cols_for_db, sorted_df = format_sensor_data(response) # format sensors data. returns column names and formated geo dataframe
-  pg_post_init_sensor_data(cols_for_db, sorted_df)
 
-db_need_init()
 def db_notinit():
    print("you're not init!")
