@@ -453,7 +453,7 @@ def Add_new_users(df, pg_connection_dict):
         numbers = df.phone.to_list()
         messages = [Create_messages.welcome_message()]*len(numbers)
         
-        our_twilio.send_texts(numbers, messages, account_sid, auth_token, twilio_number)
+        our_twilio.send_texts(numbers, messages)
     
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
