@@ -64,12 +64,16 @@ def welcome_message():
     Composes a message welcoming a new user!
     '''
     
+    
+
     message = '''Welcome to SpikeAlerts! 
 
-We will text 8am-9pm when air quality seems unhealthy within 1 kilometer of your designated location.
+We will text 8am-9pm when air quality seems unhealthy (using 24 hour Standard) within 1 kilometer of your survey location.
 
-If you have questions, please email mplsairquality@gmail.com or see https://SpikeAlerts.github.io/Website
+Consider alerts as a caution and stay vigilant!
 
-Reply STOP to end this service'''
+For questions see SpikeAlerts.github.io/Website
+
+Reply STOP to end this service. Msg&Data Rates May Apply'''
 
     return message
