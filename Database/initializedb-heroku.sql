@@ -7,7 +7,7 @@
 -- CREATE DATABASE "spike_alerts"; -- Create the database
 
 --\c "SpikeAlerts"; -- Connect to database This needs a password!
-DROP SCHEMA IF EXISTS internal;
+DROP SCHEMA IF EXISTS internal CASCADE;
 DROP EXTENSION IF EXISTS postgis CASCADE;
 DROP EXTENSION IF EXISTS postgis_topology CASCADE;
 
