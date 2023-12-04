@@ -68,7 +68,7 @@ spike_threshold = int(35) # Value which defines an AQ_Spike (Micgrograms per met
 timestep = int(10) # Sleep time in between updates (in seconds)
 
 # When to stop the program? (datetime)
-days_to_run = int(3) # How many days will we run this?
+days_to_run = int(7) # How many days will we run this?
 starttime = dt.datetime.now(pytz.timezone('America/Chicago')) 
 stoptime = starttime + dt.timedelta(days=days_to_run)
 
