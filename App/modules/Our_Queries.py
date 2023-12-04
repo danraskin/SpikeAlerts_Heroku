@@ -21,7 +21,7 @@ def Get_last_PurpleAir_update(pg_connection_dict, timezone = 'America/Chicago'):
     returns timezone aware datetime
     '''
 
-    cmd = sql.SQL('''SELECT MAX(last_seen)
+    cmd = sql.SQL('''SELECT MAX(last_seen) - INTERVAL '20 minutes'
     FROM "PurpleAir Stations"
     WHERE channel_flags = 0;
     ''')
