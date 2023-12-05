@@ -17,6 +17,14 @@ CREATE EXTENSION postgis_topology;
 -- CREATE SCHEMA postgis;
 
 
+CREATE table internal."Daily Log" -- This is to store important daily metrics
+    ("date" date DEFAULT CURRENT_DATE,
+     new_users int,
+     messages_sent int DEFAULT 0,
+     segments_sent int DEFAULT 0,
+	 reports_for_day int DEFAULT 0
+    );
+
 CREATE table internal."Sign Up Information"-- This is our internal record keeping for users
 	(record_id integer, -- Unique Identifier from REDCap
 	last_messaged timestamp DEFAULT CURRENT_TIMESTAMP, -- Last time messaged
