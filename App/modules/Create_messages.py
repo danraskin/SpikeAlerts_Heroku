@@ -14,7 +14,7 @@ def new_alert_message(sensor_index, verified_number = True):
     # Short version (1 segment)
     
     message = '''SPIKE ALERT!
-Air quality is may be unhealthy in your area'''
+Air quality may be unhealthy in your area'''
     
     # URLs cannot be sent until phone number is verified
     if verified_number:
