@@ -22,7 +22,7 @@ from App.modules import Create_messages
 
 ## Workflow
 
-def workflow(sensors_dict, purpleAir_runtime, messages, record_ids_to_text, reports_for_day, base_report_url, can_text, pg_connection_dict):
+def workflow(sensors_dict, purpleAir_runtime, messages, record_ids_to_text, afterhour_reports, base_report_url, can_text, pg_connection_dict):
     '''
     Runs the full workflow for a new spike
     
@@ -53,12 +53,14 @@ def workflow(sensors_dict, purpleAir_runtime, messages, record_ids_to_text, repo
     # 5) If #4 has elements: for each element (user) in #4
     
     if len(record_ids_end_alert_message) > 0:
+        
+        reports_for_day = query.Get_reports_for_day(pg_connection_dict)
     
         for record_id in record_ids_end_alert_message:
             
             # a) Initialize report - generate unique report_id, log cached_alerts and use to find start_time/max reading/duration/sensor_indices
                 
-            duration_minutes, max_reading, report_id = Initialize_report(record_id, reports_for_day, pg_connection_dict)
+            start_time, duration_minutes, max_reading, report_id = Initialize_report(record_id, reports_for_day, pg_connection_dict)
             
             reports_for_day += 1 
             
@@ -68,12 +70,21 @@ def workflow(sensors_dict, purpleAir_runtime, messages, record_ids_to_text, repo
                 
                 record_ids_to_text += [record_id]
                 messages += [Create_messages.end_alert_message(duration_minutes, max_reading, report_id, base_report_url)] # in Create_messages.py
+                
+            else:
+                
+                afterhour_reports += [(record_id,
+                                      Create_messages.afterhour_ended_alert_message(start_time, duration_minutes, max_reading, report_id, base_report_url)
 
+        # Update reports for day
+        
+        Update_reports_for_day(reports_for_day, pg_connection_dict)        
+        
         # c) Clear the users' cached_alerts 
         
         Clear_cached_alerts(record_ids_end_alert_message, pg_connection_dict)
     
-    return messages, record_ids_to_text, reports_for_day
+    return messages, record_ids_to_text, afterhour_reports
     
 # ~~~~~~~~~~~~~~~~~~~~~ 
     
@@ -199,7 +210,7 @@ FROM alert_cache c, alerts a, unnested_sensors n;
 
     # Now get the information from that report
 
-    cmd = sql.SQL('''SELECT duration_minutes, max_reading
+    cmd = sql.SQL('''SELECT start_time, duration_minutes, max_reading
              FROM "Reports Archive"
              WHERE report_id = {};
 ''').format(sql.Literal(report_id))
@@ -207,9 +218,9 @@ FROM alert_cache c, alerts a, unnested_sensors n;
     response = psql.get_response(cmd, pg_connection_dict)
 
     # Unpack response
-    duration_minutes, max_reading = response[0]
+    start_time, duration_minutes, max_reading = response[0]
 
-    return duration_minutes, max_reading, report_id    
+    return start_time, duration_minutes, max_reading, report_id    
 # ~~~~~~~~~~~~~~~~
 
 # 3) Transfer these alerts from "Sign Up Information" active_alerts to "Sign Up Information" cached_alerts
@@ -245,6 +256,18 @@ def Cache_alerts(ended_alert_indices, pg_connection_dict):
     conn.close()
     
 # ~~~~~~~~~~~~~~~~
+
+def Update_reports_for_day(reports_for_day, pg_connection_dict):
+    '''
+    This function updates reports for day to the new value
+    '''
+    
+    cmd = sql.SQL(f'''UPDATE "Daily Log"
+                    reports_for_day = {reports_for_day}
+                    WHERE date = DATE(CURRENT_TIMESTAMP - INTERVAL '8 hours');
+                   ''')
+                   
+    psql.send_update(cmd, pg_connection_dict)
     
 # 5c) Clear a users' cache
 

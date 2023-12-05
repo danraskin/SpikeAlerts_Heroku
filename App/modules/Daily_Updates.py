@@ -30,46 +30,51 @@ from App.modules import Twilio_Functions as our_twilio
 # Messaging
 
 from App.modules import Create_messages
-from App.modules import PurpleAir_Functions as purp
-from App.modules import REDCap_Functions as redcap
+from App.modules import Send_Alerts
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ## Workflow
 
-def workflow(next_update_time, reports_for_day, messages_sent_today, purpleAir_api, redCap_token_signUp, pg_connection_dict, timezone = 'America/Chicago'):
+def workflow(next_update_time, afterhour_reports, purpleAir_api, redCap_token_signUp, pg_connection_dict, timezone = 'America/Chicago'):
     '''
     This is the full workflow for Daily Updates
     
-    returns the next_update_time (datetime timestamp), reports_for_day, messages_sent_today (ints)
+    returns the next_update_time (datetime timestamp), afterhour_reports (list)
     '''
     
     # PurpleAir
     # If we haven't already updated the full sensor list today, let's do that
     
-    last_PurpleAir_update = query.Get_last_PurpleAir_update(pg_connection_dict, timezone = timezone) # See Daily_Updates.py      
+    last_update_date = query.Get_last_Daily_Log(pg_connection_dict) # See Daily_Updates.py      
       
-    if last_PurpleAir_update < next_update_time: # If haven't updated full system today
+    if last_update_date < next_update_time.date(): # If haven't updated full system today
+
         # Update "PurpleAir Stations" from PurpleAir
         Sensor_Information_Daily_Update(pg_connection_dict, purpleAir_api)
-    
+        
         # Update "Sign Up Information" from REDCap - See Daily_Updates.py
         max_record_id = query.Get_newest_user(pg_connection_dict)
         REDCap_df = redcap.Get_new_users(max_record_id, redCap_token_signUp)
         Add_new_users(REDCap_df, pg_connection_dict)
+        
+        # Initialize Daily Log
+        
+        initialize_daily_log(len(REDCap_df))
+        
+        # Send reports stored from yesterday
+        
+        record_ids = [afterhour_report[0] for afterhour_report in afterhour_reports]
+        messages = [afterhour_report[1] for afterhour_report in afterhour_reports]
+        send_all_messages(record_ids, messages, redCap_token_signUp, pg_connection_dict)
+        afterhour_reports = [] # Reset the storage
+    
         print(len(REDCap_df), 'new users')
-        
-        print(reports_for_day, 'reports yesterday')
-        print(messages_sent_today, 'messages sent yesterday')
-        
-        # Initialize storage for daily metrics
-        reports_for_day = 0
-        messages_sent_today = 0
     
     # Get next update time (in 1 day)
     next_update_time += dt.timedelta(days=1)
     
-    return next_update_time, reports_for_day, messages_sent_today
+    return next_update_time, afterhour_reports
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    
@@ -456,6 +461,19 @@ def Add_new_users(df, pg_connection_dict):
         our_twilio.send_texts(numbers, messages)
     
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+def initialize_daily_log(len_new_users):
+    '''
+    This function initializes a new daily log
+    '''
+    
+    cmd = sql.SQL('''INSERT INTO "Daily Log"
+	(new_users, messages_sent, segments_sent) 
+VALUES ({}, {}, {});
+    ''').format(sql.Literal(len_new_users), sql.Literal(len_new_users), sql.Literal(len_new_users * 2))
+    
+    psql.send_update(cmd, pg_connection_dict)   
 
 # Subscriptions
 

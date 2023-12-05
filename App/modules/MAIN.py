@@ -78,7 +78,7 @@ too_early_hr = 8 # 8am
 
 # Report URL
 
-base_report_url = 'https://redcap.ahc.umn.edu/surveys/?s=LN3HHDCJXYCKFCLE'
+base_report_url = 'redcap.ahc.umn.edu/surveys/?s=LN3HHDCJXYCKFCLE'
 
 # Is Twilio number verified (can it send URLs)?
 
@@ -101,11 +101,10 @@ def main_loop():
 
     ''')
 
-    # Initialize next update time (8am today), storage for reports_for_day
+    # Initialize next update time (8am today), storage for reports_after_hours
 
     next_update_time = starttime.replace(hour=8, minute = 0, second = 0)
-    reports_for_day = 0
-    messages_sent_today = 0
+    afterhour_reports = [] # tuples of (record_id, message)
 
     while True:
 
@@ -128,9 +127,7 @@ def main_loop():
         
         if now > next_update_time:
     
-            next_update_time, reports_for_day, messages_sent_today = Daily_Updates.workflow(next_update_time,
-                                                                                        reports_for_day,
-                                                                                  messages_sent_today,
+            next_update_time, afterhour_reports = Daily_Updates.workflow(next_update_time, afterhour_reports
                                                                                    purpleAir_api,
                                                                                     redCap_token_signUp,
                                                                                     pg_connection_dict)
@@ -171,11 +168,11 @@ def main_loop():
         
         # ENDED spikes
 
-        messages, record_ids_to_text, reports_for_day = Ended_Alerts.workflow(sensors_dict,
+        messages, record_ids_to_text, afterhour_reports = Ended_Alerts.workflow(sensors_dict,
                                                                              purpleAir_runtime,
                                                                               messages,
                                                                                record_ids_to_text,
-                                                                                reports_for_day,
+                                                                               afterhour_reports,
                                                                                 base_report_url,
                                                                                 can_text,
                                                                                  pg_connection_dict)
@@ -189,15 +186,6 @@ def main_loop():
                               redCap_token_signUp,
                               pg_connection_dict) # in Send_Alerts.py & .ipynb
             
-            # Save them locally - for developers
-            
-            f = open("test.txt", "a")
-            for i in range(len(record_ids_to_text)):
-                line = f'\n\n{str(record_ids_to_text[i])} - {purpleAir_runtime}\n\n' + messages[i]
-                f.write(line)
-            f.close()
-            
-            messages_sent_today += len(record_ids_to_text) # Not quite right. Overcounts for unsubscribed numbers
         
         # ~~~~~~~~~~~~~~~~~~~~~
 

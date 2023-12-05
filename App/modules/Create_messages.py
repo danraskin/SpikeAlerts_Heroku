@@ -11,13 +11,13 @@ def new_alert_message(sensor_index, verified_number = True):
         
     # Short version (1 segment)
     
-    message = f'''SPIKE ALERT!
-Air quality is unhealthy in your area'''
+    message = '''SPIKE ALERT!
+Air quality is may be unhealthy in your area'''
     
     # URLs cannot be sent until phone number is verified
     if verified_number:
         message = message + f'''
-https://map.purpleair.com/?select={int(sensor_index)}/44.9723/-93.2447'''
+map.purpleair.com/?select={int(sensor_index)}/44.9723/-93.2447'''
     else:
         message = message + '''
         Please see PurpleAir'''
@@ -59,12 +59,41 @@ Report here - '''
         
     return message
     
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+def afterhour_end_alert_message(start_time, duration, max_reading, report_id, base_report_url, verified_number = True):
+    '''
+    Get a list of messages to send when an alert is over
+
+    inputs:
+    duration = integer (number of minutes)
+    max_reading = float
+    report_id = string
+    base_report_url is a string links directly to REDCap comment survey
+    
+    Returns a message (string)
+    '''
+    
+    time_string = start_time.strftime('%H:%M') + '-' + (start_time + dt.timedelta(minutes=duration)).strftime('%H:%M')
+    message = f'''Overnight Alert
+Timespan {time_string}
+Max value: {max_reading} ug/m3
+
+Report here - '''
+    
+    # URLs cannot be sent until phone number is verified
+    if verified_number:
+        message = message + f"{base_report_url+ '&report_id=' + report_id}"
+    else:
+        message = message + f'URL coming soon... Report ID: {report_id}'
+    # See https://help.redcap.ualberta.ca/help-and-faq/survey-parameters for filling in variable in url
+        
+    return message
+    
 def welcome_message():
     '''
     Composes a message welcoming a new user!
     '''
-    
-    
 
     message = '''Welcome to SpikeAlerts! 
 

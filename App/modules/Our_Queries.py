@@ -14,16 +14,15 @@ import datetime as dt
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~      
 
-def Get_last_PurpleAir_update(pg_connection_dict, timezone = 'America/Chicago'):
+def Get_last_Daily_Log(pg_connection_dict):
     '''
     This function gets the highest last_seen (only updated daily)
     
     returns timezone aware datetime
     '''
 
-    cmd = sql.SQL('''SELECT MAX(last_seen) - INTERVAL '20 minutes'
-    FROM "PurpleAir Stations"
-    WHERE channel_flags = 0;
+    cmd = sql.SQL('''SELECT MAX(date)
+    FROM "Daily Log";
     ''')
     
     response = psql.get_response(cmd, pg_connection_dict)
@@ -32,11 +31,11 @@ def Get_last_PurpleAir_update(pg_connection_dict, timezone = 'America/Chicago'):
     
     if response[0][0] != None:
 
-        max_last_seen = response[0][0].replace(tzinfo=pytz.timezone(timezone))
+        last_update_date = response[0][0]
     else:
-        max_last_seen = dt.datetime(2000, 1, 1).replace(tzinfo=pytz.timezone(timezone))
+        last_update_date = dt.date(2000, 1, 1)
     
-    return max_last_seen
+    return last_update_date
     
 ### ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -297,4 +296,24 @@ def Get_users_to_message_end_alert(pg_connection_dict, ended_alert_indices):
     
 # ~~~~~~~~~~~~~~ 
 
+def Get_reports_for_day(pg_connection_dict):
+    '''
+    This function gets the count of reports for the day (we're considering overnights to be reports from previous day)
+    '''
 
+    cmd = sql.SQL('''SELECT reports_for_day
+FROM "Daily Log"
+WHERE date = DATE(CURRENT_TIMESTAMP - INTERVAL '8 hours');
+    ''')
+    
+    response = psql.get_response(cmd, pg_connection_dict)
+
+    # Unpack response into timezone aware datetime
+    
+    if response[0][0] != None:
+
+        reports_for_day = int(response[0][0])
+    else:
+        reports_for_day = 0
+    
+    return reports_for_day

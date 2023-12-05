@@ -65,6 +65,8 @@ def send_all_messages(record_ids, messages, redCap_token_signUp, pg_connection_d
     
     update_user_table(record_ids, times, pg_connection_dict) # See Send_Alerts.py
     
+    update_daily_log(len(messages))
+    
 
 # ~~~~~~~~~~~~~
 
@@ -127,7 +129,18 @@ def update_user_table(record_ids, times, pg_connection_dict):
     
 # ~~~~~~~~~~~~~
 
-
+def update_daily_log(messages_sent):
+    '''
+    This function adds to the number of messages sent
+    '''
+    cmd = sql.SQL(f'''UPDATE "Daily Log"
+                    messages_sent = messages_sent + {messages_sent}, segments_sent = segments_sent + {messages_sent}
+                    WHERE date = CURRENT_DATE
+                   ''')
+                   
+    psql.send_update(cmd, pg_connection_dict)
+    
+# ~~~~~~~~~~~~~~~~~~~~~
     
 def Unsubscribe_users(record_ids, pg_connection_dict):
     '''
