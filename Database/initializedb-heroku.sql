@@ -27,7 +27,7 @@ CREATE table internal."Daily Log" -- This is to store important daily metrics
 
 CREATE table internal."Sign Up Information"-- This is our internal record keeping for users
 	(record_id integer, -- Unique Identifier from REDCap
-	last_messaged timestamp DEFAULT CURRENT_TIMESTAMP, -- Last time messaged
+	last_messaged timestamp DEFAULT CURRENT_DATE + INTERVAL '8 hours', -- Last time messaged
 	messages_sent int DEFAULT 1, -- Number of messages sent
 	active_alerts bigint [] DEFAULT array[]::bigint [], -- List of Active Alerts
 	cached_alerts bigint [] DEFAULT array[]::bigint [], -- List of ended Alerts not yet notified about
