@@ -303,7 +303,7 @@ def Get_reports_for_day(pg_connection_dict):
 
     cmd = sql.SQL('''SELECT reports_for_day
 FROM "Daily Log"
-WHERE date = DATE(CURRENT_TIMESTAMP - INTERVAL '8 hours');
+WHERE date = DATE(CURRENT_TIMESTAMP AT TIME ZONE 'America/Chicago' - INTERVAL '8 hours');
     ''')
     
     response = psql.get_response(cmd, pg_connection_dict)

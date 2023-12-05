@@ -135,7 +135,7 @@ def update_daily_log(messages_sent):
     '''
     cmd = sql.SQL(f'''UPDATE "Daily Log"
                     messages_sent = messages_sent + {messages_sent}, segments_sent = segments_sent + {messages_sent}
-                    WHERE date = CURRENT_DATE
+                    WHERE date = DATE(CURRENT_TIMESTAMP AT TIME ZONE 'America/Chicago' - INTERVAL '8 hours')
                    ''')
                    
     psql.send_update(cmd, pg_connection_dict)
