@@ -78,7 +78,7 @@ def update_user_table(record_ids, times, pg_connection_dict):
 
     cmd = sql.SQL('''
     UPDATE "Sign Up Information"
-    SET last_messaged = CURRENT TIMESTAMP AT TIME ZONE 'America/Chicago', messages_sent = messages_sent + 1
+    SET last_messaged = CURRENT_TIMESTAMP AT TIME ZONE 'America/Chicago', messages_sent = messages_sent + 1
     WHERE record_id = ANY ( {} );
     ''').format(sql.Literal(record_ids)
                 )
