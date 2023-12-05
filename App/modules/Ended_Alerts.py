@@ -265,7 +265,7 @@ def Update_reports_for_day(reports_for_day, pg_connection_dict):
     '''
     
     cmd = sql.SQL(f'''UPDATE "Daily Log"
-                    reports_for_day = {reports_for_day}
+                    SET reports_for_day = {reports_for_day}
                     WHERE date = DATE(CURRENT_TIMESTAMP - INTERVAL '8 hours');
                    ''')
                    
