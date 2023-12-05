@@ -75,6 +75,8 @@ def workflow(sensors_dict, purpleAir_runtime, messages, record_ids_to_text, afte
                 
                 afterhour_reports += [(record_id,
                                       Create_messages.afterhour_ended_alert_message(start_time, duration_minutes, max_reading, report_id, base_report_url)
+                                      )
+                                      ]
 
         # Update reports for day
         
