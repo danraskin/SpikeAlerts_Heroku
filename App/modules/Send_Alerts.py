@@ -65,7 +65,7 @@ def send_all_messages(record_ids, messages, redCap_token_signUp, pg_connection_d
     
     update_user_table(record_ids, times, pg_connection_dict) # See Send_Alerts.py
     
-    update_daily_log(len(messages))
+    update_daily_log(len(messages), pg_connection_dict)
     
 
 # ~~~~~~~~~~~~~
@@ -129,7 +129,7 @@ def update_user_table(record_ids, times, pg_connection_dict):
     
 # ~~~~~~~~~~~~~
 
-def update_daily_log(messages_sent):
+def update_daily_log(messages_sent, pg_connection_dict):
     '''
     This function adds to the number of messages sent
     '''
