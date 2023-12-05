@@ -90,7 +90,7 @@ verified_number = True
 
 ### The Loop
 def main_loop():
-    days_to_run = 1
+    days_to_run = 7
     starttime = dt.datetime.now(pytz.timezone('America/Chicago'))
     stoptime = starttime + dt.timedelta(days=days_to_run)    
     print(f'''Beginning program
@@ -127,7 +127,7 @@ def main_loop():
         
         if now > next_update_time:
     
-            next_update_time, afterhour_reports = Daily_Updates.workflow(next_update_time, afterhour_reports
+            next_update_time, afterhour_reports = Daily_Updates.workflow(next_update_time, afterhour_reports,
                                                                                    purpleAir_api,
                                                                                     redCap_token_signUp,
                                                                                     pg_connection_dict)
