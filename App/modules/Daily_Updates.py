@@ -64,10 +64,11 @@ def workflow(next_update_time, afterhour_reports, purpleAir_api, redCap_token_si
         
         # Send reports stored from yesterday
         
-        record_ids = [afterhour_report[0] for afterhour_report in afterhour_reports]
-        messages = [afterhour_report[1] for afterhour_report in afterhour_reports]
-        send_all_messages(record_ids, messages, redCap_token_signUp, pg_connection_dict)
-        afterhour_reports = [] # Reset the storage
+        if len(afterhour_report) > 0:
+            record_ids = [afterhour_report[0] for afterhour_report in afterhour_reports]
+            messages = [afterhour_report[1] for afterhour_report in afterhour_reports]
+            send_all_messages(record_ids, messages, redCap_token_signUp, pg_connection_dict)
+            afterhour_reports = [] # Reset the storage
     
         print(len(REDCap_df), 'new users')
     
