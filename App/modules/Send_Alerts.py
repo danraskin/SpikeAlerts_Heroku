@@ -134,7 +134,7 @@ def update_daily_log(messages_sent):
     This function adds to the number of messages sent
     '''
     cmd = sql.SQL(f'''UPDATE "Daily Log"
-                    messages_sent = messages_sent + {messages_sent}, segments_sent = segments_sent + {messages_sent}
+                    SET messages_sent = messages_sent + {messages_sent}, segments_sent = segments_sent + {messages_sent}
                     WHERE date = DATE(CURRENT_TIMESTAMP AT TIME ZONE 'America/Chicago' - INTERVAL '8 hours')
                    ''')
                    
