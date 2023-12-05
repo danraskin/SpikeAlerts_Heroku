@@ -61,7 +61,7 @@ Report here - '''
     
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def afterhour_end_alert_message(start_time, duration, max_reading, report_id, base_report_url, verified_number = True):
+def afterhour_ended_alert_message(start_time, duration, max_reading, report_id, base_report_url, verified_number = True):
     '''
     Get a list of messages to send when an alert is over
 
