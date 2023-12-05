@@ -60,7 +60,7 @@ def workflow(next_update_time, afterhour_reports, purpleAir_api, redCap_token_si
         
         # Initialize Daily Log
         
-        initialize_daily_log(len(REDCap_df))
+        initialize_daily_log(len(REDCap_df), pg_connection_dict)
         
         # Send reports stored from yesterday
         
@@ -464,7 +464,7 @@ def Add_new_users(df, pg_connection_dict):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-def initialize_daily_log(len_new_users):
+def initialize_daily_log(len_new_users, pg_connection_dict):
     '''
     This function initializes a new daily log
     '''
