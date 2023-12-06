@@ -92,6 +92,19 @@ Report here - '''
         
     return message
     
+def no_location(signUp_url):
+    '''
+    Composes a message informing a user of misentered locations 
+    '''
+    
+    message = f'''Hello, this is SpikeAlerts. 
+    
+    We're sorry. It appears no location was entered in your form. Please resubmit.
+    
+    {signUp_url}'''
+
+    return message
+    
 def welcome_message():
     '''
     Composes a message welcoming a new user!

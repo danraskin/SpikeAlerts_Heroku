@@ -436,27 +436,46 @@ def Add_new_users(df, pg_connection_dict):
     The dataframe must have "phone", "record_id" and "wkt" as columns with the Well Known Text in WGS84 (EPSG:4326) "Lat/lon"
     '''
     
-    if len(df) > 0:
-        
-        load_dotenv()
+    # Get Twilio Creds
+    
+    load_dotenv()
 
-        account_sid = os.environ['TWILIO_ACCOUNT_SID']
-        auth_token = os.environ['TWILIO_AUTH_TOKEN']
-        twilio_number = os.environ['TWILIO_NUMBER']
-        # Insert into database
+    account_sid = os.environ['TWILIO_ACCOUNT_SID']
+    auth_token = os.environ['TWILIO_AUTH_TOKEN']
+    twilio_number = os.environ['TWILIO_NUMBER']
+    
+    # See if users entered a proper location
+    
+    is_no_location = df[['lat','lon']].isna().sum(axis=1) != 0
+    
+    no_loc_df = df[is_no_location]
+    good_df = df[~is_no_location]
+    
+    if len(no_loc_df) >0: # Incorrect location entry
+    
+        signUp_url = os.environ['SIGNUP_URL']
         
-        df['geometry'] = df.wkt
+        # Now message those new users with errored locations
+        
+        numbers = no_loc_df.phone.to_list()
+        messages = [Create_messages.no_location(signUp_url)]*len(numbers)
+        
+        our_twilio.send_texts(numbers, messages)
+    
+    if len(good_df) > 0: # Correct location entry - insert into location
+        
+        good_df['geometry'] = good_df.wkt
         
         #print(df.geometry[0])
         #print(type(df))
         
-        df_for_db = df[['record_id', 'geometry']]
+        df_for_db = good_df[['record_id', 'geometry']]
         
         psql.insert_into(df_for_db, "Sign Up Information", pg_connection_dict, is_spatial = True)
         
         # Now message those new users
         
-        numbers = df.phone.to_list()
+        numbers = good_df.phone.to_list()
         messages = [Create_messages.welcome_message()]*len(numbers)
         
         our_twilio.send_texts(numbers, messages)
