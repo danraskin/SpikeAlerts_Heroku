@@ -293,11 +293,9 @@ def Get_users_to_message_new_alert(pg_connection_dict, record_ids):
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def Get_users_to_message_end_alert(pg_connection_dict, ended_alert_indices):
+def Get_users_to_message_end_alert(pg_connection_dict):
     '''
     This function will return a list of record_ids from "Sign Up Information" that are subscribed, have empty active_alerts, non-empty cached_alerts
-    
-    ended_alert_indices = a list of alert_ids that just ended
     
     returns record_ids_to_text (a list)
     '''

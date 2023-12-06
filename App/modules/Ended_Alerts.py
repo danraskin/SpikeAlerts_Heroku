@@ -43,12 +43,9 @@ def workflow(sensors_dict, purpleAir_runtime, messages, record_ids_to_text, base
         
         Cache_alerts(ended_alert_indices, pg_connection_dict)
         
-    else:
-        ended_alert_indices = []
-        
     # 4) Query for people to text about ended alerts (subscribed = TRUE and active_alerts is empty and cached_alerts not empty and cached_alerts 
         
-    record_ids_end_alert_message = query.Get_users_to_message_end_alert(pg_connection_dict, ended_alert_indices)
+    record_ids_end_alert_message = query.Get_users_to_message_end_alert(pg_connection_dict)
             
     # 5) If #4 has elements: for each element (user) in #4
     
@@ -280,7 +277,7 @@ def Update_reports_for_day(reports_for_day, pg_connection_dict):
     
     cmd = sql.SQL(f'''UPDATE "Daily Log"
                     SET reports_for_day = {reports_for_day}
-                    WHERE date = DATE(CURRENT_TIMESTAMP - INTERVAL '8 hours');
+                    WHERE date = DATE(CURRENT_TIMESTAMP AT TIME ZONE 'America/Chicago' - INTERVAL '8 hours');
                    ''')
                    
     psql.send_update(cmd, pg_connection_dict)
