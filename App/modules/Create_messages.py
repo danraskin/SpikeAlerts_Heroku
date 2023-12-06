@@ -98,10 +98,10 @@ def no_location(signUp_url):
     '''
     
     message = f'''Hello, this is SpikeAlerts. 
-    
-    We're sorry. It appears no location was entered in your form. Please resubmit.
-    
-    {signUp_url}'''
+
+We're sorry, no location was entered in your form. Please resubmit.
+
+{signUp_url}'''
 
     return message
     
