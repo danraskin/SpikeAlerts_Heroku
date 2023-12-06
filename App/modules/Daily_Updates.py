@@ -36,11 +36,11 @@ from App.modules import Send_Alerts
 
 ## Workflow
 
-def workflow(next_update_time, afterhour_reports, purpleAir_api, redCap_token_signUp, pg_connection_dict, timezone = 'America/Chicago'):
+def workflow(next_update_time, purpleAir_api, redCap_token_signUp, pg_connection_dict, timezone = 'America/Chicago'):
     '''
     This is the full workflow for Daily Updates
     
-    returns the next_update_time (datetime timestamp), afterhour_reports (list)
+    returns the next_update_time (datetime timestamp)
     '''
     
     # PurpleAir
@@ -64,18 +64,20 @@ def workflow(next_update_time, afterhour_reports, purpleAir_api, redCap_token_si
         
         # Send reports stored from yesterday
         
+        afterhour_reports = query.Get_afterhour_reports(pg_connection_dict)
+        
         if len(afterhour_reports) > 0:
             record_ids = [afterhour_report[0] for afterhour_report in afterhour_reports]
             messages = [afterhour_report[1] for afterhour_report in afterhour_reports]
-            send_all_messages(record_ids, messages, redCap_token_signUp, pg_connection_dict)
-            afterhour_reports = [] # Reset the storage
+            Send_Alerts.send_all_messages(record_ids, messages, redCap_token_signUp, pg_connection_dict)
+            Clear_afterhour_reports(pg_connection_dict)
     
         print(len(REDCap_df), 'new users')
     
     # Get next update time (in 1 day)
     next_update_time += dt.timedelta(days=1)
     
-    return next_update_time, afterhour_reports
+    return next_update_time
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    
@@ -493,7 +495,18 @@ def initialize_daily_log(len_new_users, pg_connection_dict):
 VALUES ({}, {}, {});
     ''').format(sql.Literal(len_new_users), sql.Literal(len_new_users), sql.Literal(len_new_users * 2))
     
-    psql.send_update(cmd, pg_connection_dict)   
+    psql.send_update(cmd, pg_connection_dict)
+    
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+def Clear_afterhour_reports(pg_connection_dict):
+    '''
+    This function clears the "Afterhour Reports" table
+    '''
+    
+    cmd = sql.SQL('''TRUNCATE TABLE "Afterhour Reports";''')
+    
+    psql.send_update(cmd, pg_connection_dict)
 
 # Subscriptions
 

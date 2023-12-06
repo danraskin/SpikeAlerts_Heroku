@@ -22,7 +22,7 @@ from App.modules import Create_messages
 
 ## Workflow
 
-def workflow(sensors_dict, purpleAir_runtime, messages, record_ids_to_text, afterhour_reports, base_report_url, can_text, pg_connection_dict):
+def workflow(sensors_dict, purpleAir_runtime, messages, record_ids_to_text, base_report_url, can_text, pg_connection_dict):
     '''
     Runs the full workflow for a new spike
     
@@ -73,10 +73,10 @@ def workflow(sensors_dict, purpleAir_runtime, messages, record_ids_to_text, afte
                 
             else:
                 
-                afterhour_reports += [(record_id,
-                                      Create_messages.afterhour_ended_alert_message(start_time, duration_minutes, max_reading, report_id, base_report_url)
+                Insert_afterhour_report(record_id,
+                                      Create_messages.afterhour_ended_alert_message(start_time, duration_minutes, max_reading, report_id, base_report_url),
+                                      pg_connection_dict
                                       )
-                                      ]
 
         # Update reports for day
         
@@ -86,7 +86,7 @@ def workflow(sensors_dict, purpleAir_runtime, messages, record_ids_to_text, afte
         
         Clear_cached_alerts(record_ids_end_alert_message, pg_connection_dict)
     
-    return messages, record_ids_to_text, afterhour_reports
+    return messages, record_ids_to_text
     
 # ~~~~~~~~~~~~~~~~~~~~~ 
     
@@ -257,6 +257,20 @@ def Cache_alerts(ended_alert_indices, pg_connection_dict):
     # Close connection
     conn.close()
     
+    
+###
+
+def Insert_afterhour_report(record_id, message, pg_connection_dict):
+    '''
+    This function inserts an afterhour reports into the database
+    '''
+    
+    cmd = sql.SQL('''INSERT INTO "Afterhour Reports" VALUES ({},{});''').format(sql.Literal(record_id),
+                    sql.Literal(message)
+                   )
+    
+    psql.send_update(cmd, pg_connection_dict)
+    
 # ~~~~~~~~~~~~~~~~
 
 def Update_reports_for_day(reports_for_day, pg_connection_dict):
@@ -270,6 +284,7 @@ def Update_reports_for_day(reports_for_day, pg_connection_dict):
                    ''')
                    
     psql.send_update(cmd, pg_connection_dict)
+  
     
 # 5c) Clear a users' cache
 

@@ -139,6 +139,28 @@ def Get_newest_user(pg_connection_dict):
 
 ### ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+def Get_afterhour_reports(pg_connection_dict):
+    '''
+    This function gets all the afterhour reports
+    
+    returns a list of tuples
+    '''
+
+    cmd = sql.SQL('''SELECT *
+    FROM "Afterhour Reports";
+    ''')
+
+    response = psql.get_response(cmd, pg_connection_dict)
+    
+    if response[0][0] == None:
+        afterhour_reports = []
+    else:
+        afterhour_reports = response
+    
+    return afterhour_reports
+
+### ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 # GetSort_Spikes
 
 ### ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

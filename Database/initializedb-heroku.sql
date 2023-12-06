@@ -16,7 +16,6 @@ CREATE EXTENSION postgis; -- Add spatial extensions
 CREATE EXTENSION postgis_topology;
 -- CREATE SCHEMA postgis;
 
-
 CREATE table internal."Daily Log" -- This is to store important daily metrics
     ("date" date DEFAULT CURRENT_DATE,
      new_users int,
@@ -43,6 +42,12 @@ CREATE table internal."Reports Archive"-- These are for reporting to the City an
 	max_reading float, 
 	sensor_indices int [], -- List of Sensor Unique Identifiers
 	alert_indices bigint [] -- List of Alert Identifiers
+    );
+    
+CREATE TABLE internal."Afterhour Reports" -- Storage for messages informing of an alert that ended overnight
+    (
+    record_id integer, -- Unique Identifier from REDCap
+    message text
     );
 
 CREATE table internal."Active Alerts Acute PurpleAir"

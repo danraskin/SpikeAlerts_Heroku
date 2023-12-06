@@ -104,7 +104,6 @@ def main_loop():
     # Initialize next update time (8am today), storage for reports_after_hours
 
     next_update_time = starttime.replace(hour=8, minute = 0, second = 0)
-    afterhour_reports = [] # tuples of (record_id, message)
 
     while True:
 
@@ -127,11 +126,11 @@ def main_loop():
         
         if now > next_update_time:
     
-            next_update_time, afterhour_reports = Daily_Updates.workflow(next_update_time, afterhour_reports,
-                                                                                   purpleAir_api,
-                                                                                    redCap_token_signUp,
-                                                                                    pg_connection_dict)
-    
+            next_update_time = Daily_Updates.workflow(next_update_time,
+                                                       purpleAir_api,
+                                                        redCap_token_signUp,
+                                                        pg_connection_dict)
+
         # ~~~~~~~~~~~~~~~~~~~~~
 
         # Query PurpleAir for Spikes and sort out if we have new, ongoing, ended, flagged, not spiked sensors
@@ -168,11 +167,10 @@ def main_loop():
         
         # ENDED spikes
 
-        messages, record_ids_to_text, afterhour_reports = Ended_Alerts.workflow(sensors_dict,
+        messages, record_ids_to_text = Ended_Alerts.workflow(sensors_dict,
                                                                              purpleAir_runtime,
                                                                               messages,
                                                                                record_ids_to_text,
-                                                                               afterhour_reports,
                                                                                 base_report_url,
                                                                                 can_text,
                                                                                  pg_connection_dict)
