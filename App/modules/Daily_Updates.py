@@ -447,7 +447,7 @@ def Add_new_users(df, pg_connection_dict):
     twilio_number = os.environ['TWILIO_NUMBER']
     
     # See if users entered a proper location
-    
+    print(df.columns)
     is_no_location = df[['lat','lon']].isna().sum(axis=1) != 0
     
     no_loc_df = df[is_no_location]
