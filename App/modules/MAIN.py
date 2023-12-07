@@ -1,7 +1,5 @@
-## This script will run when the flask app runs, and will prevent any access the server endpoints.
-# This is an extremely sloppy way to do deploy this script.
+## This script will run when the worker process runs
 # days_to_run, timestop, and spike_threshold are all hard-coded.
-# Lines 60-65, 273-276, 302 must be uncommented-out to run properly.
 
 ### Prep
 
@@ -84,9 +82,7 @@ base_report_url = 'https://redcap.ahc.umn.edu/surveys/?s=LN3HHDCJXYCKFCLE'
 
 verified_number = True
 
-
 ### ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`
-
 
 ### The Loop
 def main_loop():
