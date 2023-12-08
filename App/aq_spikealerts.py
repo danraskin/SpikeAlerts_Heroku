@@ -2,6 +2,7 @@
 
 import os # For working with Operating System
 import sys
+import time
 from dotenv import load_dotenv # Loading .env info
 from App.modules.db_init import db_init, db_need_init
 from App.modules.MAIN import main_loop
@@ -23,4 +24,6 @@ except Exception as e:
     
 finally:
 
-    send_texts([os.environ['LOCAL_PHONE']], ['SpikeAlerts Down']) 
+    send_texts([os.environ['LOCAL_PHONE']], ['SpikeAlerts Down'])
+    
+    time.sleep(2880*60) # Sleep for two days if errored out
