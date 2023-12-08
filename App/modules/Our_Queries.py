@@ -152,12 +152,7 @@ def Get_afterhour_reports(pg_connection_dict):
 
     response = psql.get_response(cmd, pg_connection_dict)
     
-    if response[0][0] == None:
-        afterhour_reports = []
-    else:
-        afterhour_reports = response
-    
-    return afterhour_reports
+    return response
 
 ### ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
