@@ -66,12 +66,12 @@ def workflow(sensors_dict, purpleAir_runtime, messages, record_ids_to_text, base
                 # b) Compose message telling user it's over w/ unique report option & concat to messages/record_ids_to_text
                 
                 record_ids_to_text += [record_id]
-                messages += [Create_messages.end_alert_message(duration_minutes, max_reading, report_id, base_report_url)] # in Create_messages.py
+                messages += [Create_messages.end_alert_message(duration_minutes, max_reading, report_id, base_report_url, verified_number = False)] # in Create_messages.py
                 
             else:
                 
                 Insert_afterhour_report(record_id,
-                                      Create_messages.afterhour_ended_alert_message(start_time, duration_minutes, max_reading, report_id, base_report_url),
+                                      Create_messages.afterhour_ended_alert_message(start_time, duration_minutes, max_reading, report_id, base_report_url, verified_number = False),
                                       pg_connection_dict
                                       )
 
