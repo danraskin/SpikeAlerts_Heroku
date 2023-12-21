@@ -127,7 +127,7 @@ def Get_PurpleAir_df_bounds(fields, nwlng, selat, selng, nwlat, purpleAir_api, t
         print('HTTP Status: ' + str(response.status_code))
         print(response.text)
         
-        df = pd.DataFrame(col_names = ['sensor_index'] + fields)
+        df = pd.DataFrame(columns = ['sensor_index'] + fields)
         
     else:
         response_dict = response.json() # Read response as a json (dictionary)
