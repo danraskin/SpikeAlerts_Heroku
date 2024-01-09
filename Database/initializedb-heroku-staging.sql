@@ -8,12 +8,12 @@
 
 --\c "SpikeAlerts"; -- Connect to database This needs a password!
 DROP SCHEMA IF EXISTS staging CASCADE;
-DROP EXTENSION IF EXISTS postgis CASCADE;
-DROP EXTENSION IF EXISTS postgis_topology CASCADE;
+-- DROP EXTENSION IF EXISTS postgis CASCADE;
+-- DROP EXTENSION IF EXISTS postgis_topology CASCADE;
 
 CREATE SCHEMA staging;
-CREATE EXTENSION postgis; -- Add spatial extensions
-CREATE EXTENSION postgis_topology;
+-- CREATE EXTENSION postgis; -- Add spatial extensions
+-- CREATE EXTENSION postgis_topology;
 -- CREATE SCHEMA postgis;
 
 CREATE table staging."Daily Log" -- This is to store important daily metrics
@@ -81,16 +81,13 @@ CREATE INDEX PurpleAir_gid ON staging."PurpleAir Stations" USING GIST(geometry);
 
 CREATE TABLE staging."Minneapolis Boundary"-- From MN Geocommons - https://gisdata.mn.gov/dataset/us-mn-state-metc-bdry-census2020counties-ctus
 (
-    "CTU_ID" int, -- Unique Identifier
-    "CTU_NAME" text, -- City/Township Name
-    "CTU_CODE" text, -- City/Township Code
-    "xmin" double precision, -- coordinate values
-		"ymin" double precision, -- coordinate values
-		"xmax" double precision, -- coordinate values
-		"ymax" double precision -- coordinate values
+    "lngmin" double precision, -- coordinate values
+		"latmin" double precision, -- coordinate values
+		"lngmax" double precision, -- coordinate values
+		"latmax" double precision -- coordinate values
 ); 
 
-INSERT TABLE staging."Minneapolis Boundary"
-	("CTU_ID", "CTU_NAME", "CTU_CODE")
+INSERT INTO staging."Minneapolis Boundary"
+	("lngmin", "latmin", "lngmax", "latmax")
 	VALUES
-		('2395345','Minneapolis', '4300','-93.33037537752216', '44.88968834134478', '-93.19306250738248','45.05214646628739')
+		('-93.33037537752216', '44.88968834134478', '-93.19306250738248','45.05214646628739')

@@ -81,36 +81,24 @@ def Get_extent(pg_connection_dict):
     # Query for bounding box of boundary buffered 100 meters
 
     cmd = sql.SQL('''
-    WITH buffer as
-	    (
-	    SELECT ST_BUFFER(ST_Transform(ST_SetSRID(geometry, 4326),
-								      26915),
-					     100) geom -- buff the geometry by 100 meters
-	    FROM "Minneapolis Boundary"
-	    ), bbox as
-	    (
-	    SELECT ST_EXTENT(ST_Transform(geom, 4326)) b
-	    FROM buffer
-	    )
-    SELECT b::text
-    FROM bbox;
+        SELECT lngmin, latmin, lngmax, latmax FROM "Minneapolis Boundary";
     ''')
 
     response = psql.get_response(cmd, pg_connection_dict)
     
-    # Gives a string
-    # Unpack the response
+    # # Gives a string
+    # # Unpack the response
 
-    num_string = response[0][0][4:-1]
+    # num_string = response[0]
     
-    # That's in xmin ymin, xmax ymax
-    xmin = num_string.split(' ')[0]
-    ymin = num_string.split(' ')[1].split(',')[0]
-    xmax = num_string.split(' ')[1].split(',')[1]
-    ymax = num_string.split(' ')[2]
+    # # That's in xmin ymin, xmax ymax
+    # xmin = num_string.split(' ')[0]
+    # ymin = num_string.split(' ')[1].split(',')[0]
+    # xmax = num_string.split(' ')[1].split(',')[1]
+    # ymax = num_string.split(' ')[2]
     
     # Convert into PurpleAir API notation
-    nwlng, selat, selng, nwlat = xmin, ymin, xmax, ymax
+    nwlng, selat, selng, nwlat = response[0]
     
     return nwlng, selat, selng, nwlat
     
