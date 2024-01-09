@@ -7,16 +7,16 @@
 -- CREATE DATABASE "spike_alerts"; -- Create the database
 
 --\c "SpikeAlerts"; -- Connect to database This needs a password!
-DROP SCHEMA IF EXISTS internal CASCADE;
+DROP SCHEMA IF EXISTS staging CASCADE;
 DROP EXTENSION IF EXISTS postgis CASCADE;
 DROP EXTENSION IF EXISTS postgis_topology CASCADE;
 
-CREATE SCHEMA internal;
+CREATE SCHEMA staging;
 CREATE EXTENSION postgis; -- Add spatial extensions
 CREATE EXTENSION postgis_topology;
 -- CREATE SCHEMA postgis;
 
-CREATE table internal."Daily Log" -- This is to store important daily metrics
+CREATE table staging."Daily Log" -- This is to store important daily metrics
     ("date" date DEFAULT CURRENT_DATE,
      new_users int,
      messages_sent int DEFAULT 0,
@@ -24,7 +24,7 @@ CREATE table internal."Daily Log" -- This is to store important daily metrics
 	 reports_for_day int DEFAULT 0
     );
 
-CREATE table internal."Sign Up Information"-- This is our internal record keeping for users
+CREATE table staging."Sign Up Information"-- This is our staging record keeping for users
 	(record_id integer, -- Unique Identifier from REDCap
 	last_messaged timestamp DEFAULT CURRENT_DATE + INTERVAL '8 hours', -- Last time messaged
 	messages_sent int DEFAULT 1, -- Number of messages sent
@@ -33,9 +33,9 @@ CREATE table internal."Sign Up Information"-- This is our internal record keepin
 	subscribed boolean DEFAULT TRUE, -- Is the user wanting texts? 
 	geometry geometry);
 	
-CREATE INDEX user_gid ON internal."Sign Up Information" USING GIST(geometry);  -- Create spatial index
+CREATE INDEX user_gid ON staging."Sign Up Information" USING GIST(geometry);  -- Create spatial index
 	
-CREATE table internal."Reports Archive"-- These are for reporting to the City and future research
+CREATE table staging."Reports Archive"-- These are for reporting to the City and future research
 	(report_id varchar(12), -- Unique Identifier with format #####-MMDDYY
 	start_time timestamp,
 	duration_minutes integer,
@@ -44,26 +44,26 @@ CREATE table internal."Reports Archive"-- These are for reporting to the City an
 	alert_indices bigint [] -- List of Alert Identifiers
     );
     
-CREATE TABLE internal."Afterhour Reports" -- Storage for messages informing of an alert that ended overnight
+CREATE TABLE staging."Afterhour Reports" -- Storage for messages informing of an alert that ended overnight
     (
     record_id integer, -- Unique Identifier from REDCap
     message text
     );
 
-CREATE table internal."Active Alerts Acute PurpleAir"
+CREATE table staging."Active Alerts Acute PurpleAir"
 	(alert_index bigserial, -- Unique identifier for an air quality spike alert
 	 sensor_indices int [] DEFAULT array[]::int [], -- List of Sensor Unique Identifiers 
 	  start_time timestamp,
 	   max_reading float); -- Maximum value registered from all sensors
 
-CREATE table internal."Archived Alerts Acute PurpleAir" -- Archive of the Above table
+CREATE table staging."Archived Alerts Acute PurpleAir" -- Archive of the Above table
     (alert_index bigint,
     sensor_indices int [], -- List of Sensor Unique Identifiers 
     start_time timestamp,
     duration_minutes integer,
     max_reading float);
     
-CREATE TABLE internal."PurpleAir Stations" -- See PurpleAir API - https://api.purpleair.com/
+CREATE TABLE staging."PurpleAir Stations" -- See PurpleAir API - https://api.purpleair.com/
 (
 	sensor_index int,
 	date_created timestamp,
@@ -77,12 +77,20 @@ CREATE TABLE internal."PurpleAir Stations" -- See PurpleAir API - https://api.pu
 	geometry geometry
 );
 
-CREATE INDEX PurpleAir_gid ON internal."PurpleAir Stations" USING GIST(geometry);  -- Create spatial index for stations
+CREATE INDEX PurpleAir_gid ON staging."PurpleAir Stations" USING GIST(geometry);  -- Create spatial index for stations
 
-CREATE TABLE internal."Minneapolis Boundary"-- From MN Geocommons - https://gisdata.mn.gov/dataset/us-mn-state-metc-bdry-census2020counties-ctus
+CREATE TABLE staging."Minneapolis Boundary"-- From MN Geocommons - https://gisdata.mn.gov/dataset/us-mn-state-metc-bdry-census2020counties-ctus
 (
     "CTU_ID" int, -- Unique Identifier
     "CTU_NAME" text, -- City/Township Name
     "CTU_CODE" text, -- City/Township Code
-		geometry geometry -- Polygon
+    "xmin" double precision, -- coordinate values
+		"ymin" double precision, -- coordinate values
+		"xmax" double precision, -- coordinate values
+		"ymax" double precision -- coordinate values
 ); 
+
+INSERT TABLE staging."Minneapolis Boundary"
+	("CTU_ID", "CTU_NAME", "CTU_CODE")
+	VALUES
+		('2395345','Minneapolis', '4300','-93.33037537752216', '44.88968834134478', '-93.-93.19306250738248','45.05214646628739')
