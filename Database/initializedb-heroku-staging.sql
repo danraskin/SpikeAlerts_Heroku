@@ -93,4 +93,4 @@ CREATE TABLE staging."Minneapolis Boundary"-- From MN Geocommons - https://gisda
 INSERT TABLE staging."Minneapolis Boundary"
 	("CTU_ID", "CTU_NAME", "CTU_CODE")
 	VALUES
-		('2395345','Minneapolis', '4300','-93.33037537752216', '44.88968834134478', '-93.-93.19306250738248','45.05214646628739')
+		('2395345','Minneapolis', '4300','-93.33037537752216', '44.88968834134478', '-93.19306250738248','45.05214646628739')
