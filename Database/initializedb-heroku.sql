@@ -16,10 +16,17 @@ CREATE EXTENSION postgis; -- Add spatial extensions
 CREATE EXTENSION postgis_topology;
 -- CREATE SCHEMA postgis;
 
+CREATE table internal."Daily Log" -- This is to store important daily metrics
+    ("date" date DEFAULT CURRENT_DATE,
+     new_users int,
+     messages_sent int DEFAULT 0,
+     segments_sent int DEFAULT 0,
+	 reports_for_day int DEFAULT 0
+    );
 
 CREATE table internal."Sign Up Information"-- This is our internal record keeping for users
 	(record_id integer, -- Unique Identifier from REDCap
-	last_messaged timestamp DEFAULT CURRENT_TIMESTAMP, -- Last time messaged
+	last_messaged timestamp DEFAULT CURRENT_DATE + INTERVAL '8 hours', -- Last time messaged
 	messages_sent int DEFAULT 1, -- Number of messages sent
 	active_alerts bigint [] DEFAULT array[]::bigint [], -- List of Active Alerts
 	cached_alerts bigint [] DEFAULT array[]::bigint [], -- List of ended Alerts not yet notified about
@@ -35,6 +42,12 @@ CREATE table internal."Reports Archive"-- These are for reporting to the City an
 	max_reading float, 
 	sensor_indices int [], -- List of Sensor Unique Identifiers
 	alert_indices bigint [] -- List of Alert Identifiers
+    );
+    
+CREATE TABLE internal."Afterhour Reports" -- Storage for messages informing of an alert that ended overnight
+    (
+    record_id integer, -- Unique Identifier from REDCap
+    message text
     );
 
 CREATE table internal."Active Alerts Acute PurpleAir"

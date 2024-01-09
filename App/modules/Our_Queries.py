@@ -14,16 +14,15 @@ import datetime as dt
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~      
 
-def Get_last_PurpleAir_update(pg_connection_dict, timezone = 'America/Chicago'):
+def Get_last_Daily_Log(pg_connection_dict):
     '''
     This function gets the highest last_seen (only updated daily)
     
     returns timezone aware datetime
     '''
 
-    cmd = sql.SQL('''SELECT MAX(last_seen)
-    FROM "PurpleAir Stations"
-    WHERE channel_flags = 0;
+    cmd = sql.SQL('''SELECT MAX(date)
+    FROM "Daily Log";
     ''')
     
     response = psql.get_response(cmd, pg_connection_dict)
@@ -32,11 +31,11 @@ def Get_last_PurpleAir_update(pg_connection_dict, timezone = 'America/Chicago'):
     
     if response[0][0] != None:
 
-        max_last_seen = response[0][0].replace(tzinfo=pytz.timezone(timezone))
+        last_update_date = response[0][0]
     else:
-        max_last_seen = dt.datetime(2000, 1, 1).replace(tzinfo=pytz.timezone(timezone))
+        last_update_date = dt.date(2000, 1, 1)
     
-    return max_last_seen
+    return last_update_date
     
 ### ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -137,6 +136,42 @@ def Get_newest_user(pg_connection_dict):
         max_record_id = response[0][0]
     
     return max_record_id
+
+### ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+def Get_afterhour_reports(pg_connection_dict):
+    '''
+    This function gets all the afterhour reports
+    
+    returns a list of tuples
+    '''
+
+    cmd = sql.SQL('''SELECT *
+    FROM "Afterhour Reports";
+    ''')
+
+    response = psql.get_response(cmd, pg_connection_dict)
+    
+    return response
+    
+### ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+def Get_ongoing_alert_record_ids(pg_connection_dict):
+    '''
+    This function gets users' record_ids that have an active alert
+    
+    returns a list
+    '''
+
+    cmd = sql.SQL('''SELECT record_id FROM "Sign Up Information"
+    WHERE ARRAY_LENGTH(active_alerts, 1) > 0;
+    ''')
+
+    response = psql.get_response(cmd, pg_connection_dict)
+    
+    record_ids = [i[0] for i in response] # Unpack results into list
+    
+    return record_ids
 
 ### ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -272,11 +307,9 @@ def Get_users_to_message_new_alert(pg_connection_dict, record_ids):
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def Get_users_to_message_end_alert(pg_connection_dict, ended_alert_indices):
+def Get_users_to_message_end_alert(pg_connection_dict):
     '''
     This function will return a list of record_ids from "Sign Up Information" that are subscribed, have empty active_alerts, non-empty cached_alerts
-    
-    ended_alert_indices = a list of alert_ids that just ended
     
     returns record_ids_to_text (a list)
     '''
@@ -297,4 +330,24 @@ def Get_users_to_message_end_alert(pg_connection_dict, ended_alert_indices):
     
 # ~~~~~~~~~~~~~~ 
 
+def Get_reports_for_day(pg_connection_dict):
+    '''
+    This function gets the count of reports for the day (we're considering overnights to be reports from previous day)
+    '''
 
+    cmd = sql.SQL('''SELECT reports_for_day
+FROM "Daily Log"
+WHERE date = DATE(CURRENT_TIMESTAMP AT TIME ZONE 'America/Chicago' - INTERVAL '8 hours');
+    ''')
+    
+    response = psql.get_response(cmd, pg_connection_dict)
+
+    # Unpack response into timezone aware datetime
+    
+    if response[0][0] != None:
+
+        reports_for_day = int(response[0][0])
+    else:
+        reports_for_day = 0
+    
+    return reports_for_day

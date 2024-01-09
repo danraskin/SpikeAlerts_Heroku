@@ -30,46 +30,64 @@ from App.modules import Twilio_Functions as our_twilio
 # Messaging
 
 from App.modules import Create_messages
-from App.modules import PurpleAir_Functions as purp
-from App.modules import REDCap_Functions as redcap
+from App.modules import Send_Alerts
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ## Workflow
 
-def workflow(next_update_time, reports_for_day, messages_sent_today, purpleAir_api, redCap_token_signUp, pg_connection_dict, timezone = 'America/Chicago'):
+def workflow(next_update_time, purpleAir_api, redCap_token_signUp, pg_connection_dict, timezone = 'America/Chicago'):
     '''
     This is the full workflow for Daily Updates
     
-    returns the next_update_time (datetime timestamp), reports_for_day, messages_sent_today (ints)
+    returns the next_update_time (datetime timestamp)
     '''
     
-    # PurpleAir
-    # If we haven't already updated the full sensor list today, let's do that
+    # Check Last Update
     
-    last_PurpleAir_update = query.Get_last_PurpleAir_update(pg_connection_dict, timezone = timezone) # See Daily_Updates.py      
+    last_update_date = query.Get_last_Daily_Log(pg_connection_dict) # See Daily_Updates.py      
       
-    if last_PurpleAir_update < next_update_time: # If haven't updated full system today
+    if last_update_date < next_update_time.date(): # If haven't updated full system today
+
         # Update "PurpleAir Stations" from PurpleAir
         Sensor_Information_Daily_Update(pg_connection_dict, purpleAir_api)
-    
+        
         # Update "Sign Up Information" from REDCap - See Daily_Updates.py
         max_record_id = query.Get_newest_user(pg_connection_dict)
         REDCap_df = redcap.Get_new_users(max_record_id, redCap_token_signUp)
         Add_new_users(REDCap_df, pg_connection_dict)
+        
+        # Initialize Daily Log
+        
+        initialize_daily_log(len(REDCap_df), pg_connection_dict)
+        
+        # Send reports stored from yesterday
+        
+        afterhour_reports = query.Get_afterhour_reports(pg_connection_dict)
+        
+        if len(afterhour_reports) > 0:
+            record_ids = [afterhour_report[0] for afterhour_report in afterhour_reports]
+            messages = [afterhour_report[1] for afterhour_report in afterhour_reports]
+            Send_Alerts.send_all_messages(record_ids, messages, redCap_token_signUp, pg_connection_dict)
+            Clear_afterhour_reports(pg_connection_dict)
+    
         print(len(REDCap_df), 'new users')
         
-        print(reports_for_day, 'reports yesterday')
-        print(messages_sent_today, 'messages sent yesterday')
+        # Morning Alert Reminders
         
-        # Initialize storage for daily metrics
-        reports_for_day = 0
-        messages_sent_today = 0
+        ongoing_record_ids = query.Get_ongoing_alert_record_ids(pg_connection_dict)
+        
+        if len(ongoing_record_ids) > 0:
+        
+            messages = [Create_messages.morning_alert_message()] * len(ongoing_record_ids)
+            
+            Send_Alerts.send_all_messages(ongoing_record_ids, messages,
+                                          redCap_token_signUp, pg_connection_dict)
     
     # Get next update time (in 1 day)
     next_update_time += dt.timedelta(days=1)
     
-    return next_update_time, reports_for_day, messages_sent_today
+    return next_update_time
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    
@@ -431,31 +449,75 @@ def Add_new_users(df, pg_connection_dict):
     '''
     
     if len(df) > 0:
+    
+        # Get Twilio Creds
         
         load_dotenv()
 
         account_sid = os.environ['TWILIO_ACCOUNT_SID']
         auth_token = os.environ['TWILIO_AUTH_TOKEN']
         twilio_number = os.environ['TWILIO_NUMBER']
-        # Insert into database
         
-        df['geometry'] = df.wkt
+        # See if users entered a proper location
+        is_no_location = df[['lat','lon']].isna().sum(axis=1) != 0
         
-        #print(df.geometry[0])
-        #print(type(df))
+        no_loc_df = df[is_no_location]
+        good_df = df[~is_no_location]
         
-        df_for_db = df[['record_id', 'geometry']]
+        if len(no_loc_df) >0: # Incorrect location entry
         
-        psql.insert_into(df_for_db, "Sign Up Information", pg_connection_dict, is_spatial = True)
+            signUp_url = os.environ['SIGNUP_URL']
+            
+            # Now message those new users with errored locations
+            
+            numbers = no_loc_df.phone.to_list()
+            messages = [Create_messages.no_location(signUp_url)]*len(numbers)
+            
+            our_twilio.send_texts(numbers, messages)
         
-        # Now message those new users
-        
-        numbers = df.phone.to_list()
-        messages = [Create_messages.welcome_message()]*len(numbers)
-        
-        our_twilio.send_texts(numbers, messages)
+        if len(good_df) > 0: # Correct location entry - insert into location
+            
+            good_df['geometry'] = good_df.wkt
+            
+            #print(df.geometry[0])
+            #print(type(df))
+            
+            df_for_db = good_df[['record_id', 'geometry']]
+            
+            psql.insert_into(df_for_db, "Sign Up Information", pg_connection_dict, is_spatial = True)
+            
+            # Now message those new users
+            
+            numbers = good_df.phone.to_list()
+            messages = [Create_messages.welcome_message()]*len(numbers)
+            
+            our_twilio.send_texts(numbers, messages)
     
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+def initialize_daily_log(len_new_users, pg_connection_dict):
+    '''
+    This function initializes a new daily log
+    '''
+    
+    cmd = sql.SQL('''INSERT INTO "Daily Log"
+	(new_users, messages_sent, segments_sent) 
+VALUES ({}, {}, {});
+    ''').format(sql.Literal(len_new_users), sql.Literal(len_new_users), sql.Literal(len_new_users * 2))
+    
+    psql.send_update(cmd, pg_connection_dict)
+    
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+def Clear_afterhour_reports(pg_connection_dict):
+    '''
+    This function clears the "Afterhour Reports" table
+    '''
+    
+    cmd = sql.SQL('''TRUNCATE TABLE "Afterhour Reports";''')
+    
+    psql.send_update(cmd, pg_connection_dict)
 
 # Subscriptions
 

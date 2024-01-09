@@ -129,7 +129,7 @@ def Get_new_users(max_record_id, redCap_token_signUp):
         
         # Prep for database 
 
-        focus_df = gdf[['phone', 'record_id', 'wkt']].copy()
+        focus_df = gdf[['phone', 'lat', 'lon', 'record_id', 'wkt']].copy()
         
     else:
         focus_df = pd.DataFrame() # No data obtained

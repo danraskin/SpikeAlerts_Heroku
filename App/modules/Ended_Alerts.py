@@ -22,7 +22,7 @@ from App.modules import Create_messages
 
 ## Workflow
 
-def workflow(sensors_dict, purpleAir_runtime, messages, record_ids_to_text, reports_for_day, base_report_url, can_text, pg_connection_dict):
+def workflow(sensors_dict, purpleAir_runtime, messages, record_ids_to_text, base_report_url, can_text, pg_connection_dict):
     '''
     Runs the full workflow for a new spike
     
@@ -43,22 +43,21 @@ def workflow(sensors_dict, purpleAir_runtime, messages, record_ids_to_text, repo
         
         Cache_alerts(ended_alert_indices, pg_connection_dict)
         
-    else:
-        ended_alert_indices = []
-        
     # 4) Query for people to text about ended alerts (subscribed = TRUE and active_alerts is empty and cached_alerts not empty and cached_alerts 
         
-    record_ids_end_alert_message = query.Get_users_to_message_end_alert(pg_connection_dict, ended_alert_indices)
+    record_ids_end_alert_message = query.Get_users_to_message_end_alert(pg_connection_dict)
             
     # 5) If #4 has elements: for each element (user) in #4
     
     if len(record_ids_end_alert_message) > 0:
+        
+        reports_for_day = query.Get_reports_for_day(pg_connection_dict)
     
         for record_id in record_ids_end_alert_message:
             
             # a) Initialize report - generate unique report_id, log cached_alerts and use to find start_time/max reading/duration/sensor_indices
                 
-            duration_minutes, max_reading, report_id = Initialize_report(record_id, reports_for_day, pg_connection_dict)
+            start_time, duration_minutes, max_reading, report_id = Initialize_report(record_id, reports_for_day, pg_connection_dict)
             
             reports_for_day += 1 
             
@@ -67,13 +66,24 @@ def workflow(sensors_dict, purpleAir_runtime, messages, record_ids_to_text, repo
                 # b) Compose message telling user it's over w/ unique report option & concat to messages/record_ids_to_text
                 
                 record_ids_to_text += [record_id]
-                messages += [Create_messages.end_alert_message(duration_minutes, max_reading, report_id, base_report_url)] # in Create_messages.py
+                messages += [Create_messages.end_alert_message(duration_minutes, max_reading, report_id, base_report_url, verified_number = True)] # in Create_messages.py
+                
+            else:
+                
+                Insert_afterhour_report(record_id,
+                                      Create_messages.afterhour_ended_alert_message(start_time, duration_minutes, max_reading, report_id, base_report_url, verified_number = True),
+                                      pg_connection_dict
+                                      )
 
+        # Update reports for day
+        
+        Update_reports_for_day(reports_for_day, pg_connection_dict)        
+        
         # c) Clear the users' cached_alerts 
         
         Clear_cached_alerts(record_ids_end_alert_message, pg_connection_dict)
     
-    return messages, record_ids_to_text, reports_for_day
+    return messages, record_ids_to_text
     
 # ~~~~~~~~~~~~~~~~~~~~~ 
     
@@ -199,7 +209,7 @@ FROM alert_cache c, alerts a, unnested_sensors n;
 
     # Now get the information from that report
 
-    cmd = sql.SQL('''SELECT duration_minutes, max_reading
+    cmd = sql.SQL('''SELECT start_time, duration_minutes, max_reading
              FROM "Reports Archive"
              WHERE report_id = {};
 ''').format(sql.Literal(report_id))
@@ -207,9 +217,9 @@ FROM alert_cache c, alerts a, unnested_sensors n;
     response = psql.get_response(cmd, pg_connection_dict)
 
     # Unpack response
-    duration_minutes, max_reading = response[0]
+    start_time, duration_minutes, max_reading = response[0]
 
-    return duration_minutes, max_reading, report_id    
+    return start_time, duration_minutes, max_reading, report_id    
 # ~~~~~~~~~~~~~~~~
 
 # 3) Transfer these alerts from "Sign Up Information" active_alerts to "Sign Up Information" cached_alerts
@@ -244,7 +254,34 @@ def Cache_alerts(ended_alert_indices, pg_connection_dict):
     # Close connection
     conn.close()
     
+    
+###
+
+def Insert_afterhour_report(record_id, message, pg_connection_dict):
+    '''
+    This function inserts an afterhour reports into the database
+    '''
+    
+    cmd = sql.SQL('''INSERT INTO "Afterhour Reports" VALUES ({},{});''').format(sql.Literal(record_id),
+                    sql.Literal(message)
+                   )
+    
+    psql.send_update(cmd, pg_connection_dict)
+    
 # ~~~~~~~~~~~~~~~~
+
+def Update_reports_for_day(reports_for_day, pg_connection_dict):
+    '''
+    This function updates reports for day to the new value
+    '''
+    
+    cmd = sql.SQL(f'''UPDATE "Daily Log"
+                    SET reports_for_day = {reports_for_day}
+                    WHERE date = DATE(CURRENT_TIMESTAMP AT TIME ZONE 'America/Chicago' - INTERVAL '8 hours');
+                   ''')
+                   
+    psql.send_update(cmd, pg_connection_dict)
+  
     
 # 5c) Clear a users' cache
 
